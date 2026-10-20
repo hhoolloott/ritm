@@ -1,11 +1,14 @@
 import {createClient} from '@supabase/supabase-js';
 import {initialState,stateSchema} from './model';
+import {localJournalRequest} from './local-preview';
 const url=import.meta.env.VITE_SUPABASE_URL||'';
 const key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY||'';
 // Only the browser-safe publishable/anon key belongs in VITE_* variables.
 export const cloud=url&&key?createClient(url,key):null;
+export const localPreview=!cloud&&import.meta.env.VITE_LOCAL_PREVIEW==='true';
 const result=(body:unknown,status=200)=>Response.json(body,{status});
 export async function journalRequest(options?:{method?:string,body?:string}):Promise<Response>{
+ if(localPreview)return localJournalRequest(options);
  if(!cloud)return result({error:'Облачная база ещё не подключена'},503);
  const {data:{session}}=await cloud.auth.getSession();
  if(!session)return result({error:'Войди в дневник заново'},401);
